@@ -3,6 +3,7 @@ package com.example.weather
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -12,8 +13,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.weather.ui.theme.WeatherTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,7 +38,16 @@ fun WeatherApp() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            WeatherScreen()
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Background image
+                Image(
+                    painter = painterResource(id = R.drawable.background_image),
+                    contentDescription = null, // provide proper content description if needed
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.FillBounds
+                )
+                WeatherScreen()
+            }
         }
     }
 }
@@ -53,12 +66,12 @@ fun WeatherScreen() {
         OutlinedTextField(
             value = date,
             onValueChange = { date = it },
-            label = { Text("Date") }
+            label = { Text("Date (Format: DD-MM)", color = Color.Black, fontSize = 16.sp) }
         )
         OutlinedTextField(
             value = year,
             onValueChange = { year = it },
-            label = { Text("Year") }
+            label = { Text("Year", color = Color.Black, fontSize = 16.sp) }
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
@@ -96,7 +109,7 @@ fun WeatherScreen() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         // Display the day of the week
-        Text(text = "Day of the week: $dayOfWeek")
+        Text(text = "Day of the week: $dayOfWeek", color = Color.Black, fontSize = 16.sp)
     }
 }
 
