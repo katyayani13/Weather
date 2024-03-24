@@ -63,6 +63,7 @@ fun WeatherScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Text("Weather App", color = Color.White, fontSize = 24.sp)
         OutlinedTextField(
             value = date,
             onValueChange = { date = it },
