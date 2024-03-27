@@ -6,6 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -22,8 +26,10 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,14 +56,55 @@ fun WeatherApp() {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Background image
                 Image(
-                    painter = painterResource(id = R.drawable.background_image),
-                    contentDescription = null, // provide proper content description if needed
+                    painter = painterResource(id = R.drawable.background),
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = androidx.compose.ui.layout.ContentScale.FillBounds
                 )
-                WeatherScreen()
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Header()
+                    WeatherScreen()
+                }
+                // Positioning the footer at the bottom-left corner
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                ) {
+                    Footer()
+                }
             }
         }
+    }
+}
+
+@Composable
+fun Header() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = { /* Handle settings button click */ },
+            content = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_settings),
+                    contentDescription = "Settings",
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            modifier = Modifier.size(25.dp)
+        )
+        Text(
+            "Weather App",
+            color = Color.White,
+            fontSize = 24.sp,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -121,12 +168,12 @@ fun WeatherScreen() {
         OutlinedTextField(
             value = date,
             onValueChange = { date = it },
-            label = { Text("Date (Format: DD-MM)", color = Color.Black, fontSize = 16.sp) }
+            label = { Text("Date (Format: DD-MM)", color = Color.White, fontSize = 16.sp) }
         )
         OutlinedTextField(
             value = year,
             onValueChange = { year = it },
-            label = { Text("Year", color = Color.Black, fontSize = 16.sp) }
+            label = { Text("Year", color = Color.White, fontSize = 16.sp) }
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
@@ -164,10 +211,54 @@ fun WeatherScreen() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         // Display the day of the week
-        Text(text = "Day of the week: $dayOfWeek", color = Color.Black, fontSize = 16.sp)
+        Text(text = "Day of the week: $dayOfWeek", color = Color.White, fontSize = 16.sp)
     }
 }
 
+@Composable
+fun Footer() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = { /* Handle home button click */ },
+            content = {
+                Icon(
+                    painter = painterResource(id = R.drawable.home_button),
+                    contentDescription = "Home",
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            modifier = Modifier.size(36.dp)
+        )
+        IconButton(
+            onClick = { /* Handle location button click */ },
+            content = {
+                Icon(
+                    painter = painterResource(id = R.drawable.location_button),
+                    contentDescription = "Location",
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            modifier = Modifier.size(36.dp)
+        )
+        IconButton(
+            onClick = { /* Handle profile button click */ },
+            content = {
+                Icon(
+                    painter = painterResource(id = R.drawable.profile_button),
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            modifier = Modifier.size(36.dp)
+        )
+    }
+}
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
