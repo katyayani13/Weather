@@ -4,12 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DisplayMode
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,17 +61,62 @@ fun WeatherApp() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen() {
     var date by remember { mutableStateOf("") }
     var year by remember { mutableStateOf("") }
     var dayOfWeek by remember { mutableStateOf("") }
 
+    val state = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
+    val openDialog = remember { mutableStateOf(false) }
+
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+
     ) {
+        TextButton(
+            onClick = {
+                openDialog.value = true
+            }, colors = ButtonDefaults.textButtonColors(
+                Color.Magenta
+            )
+        ) {
+            Text("Select Date", color = Color.White)
+        }
+
+        if (openDialog.value) {
+            DatePickerDialog(
+                onDismissRequest = {
+                    openDialog.value = false
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            openDialog.value = false
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            openDialog.value = false
+                        }
+                    ) {
+                        Text("CANCEL")
+                    }
+                }
+            ) {
+                DatePicker(
+                    state = state
+                )
+            }
+        }
         Text("Weather App", color = Color.White, fontSize = 24.sp)
         OutlinedTextField(
             value = date,
