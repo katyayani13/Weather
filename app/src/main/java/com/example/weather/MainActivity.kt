@@ -1,8 +1,11 @@
 package com.example.weather
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -33,21 +36,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
 import com.example.weather.ui.theme.WeatherTheme
+import retrofit2.http.GET
+import retrofit2.http.Query
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var database: WeatherDatabase
+    private val viewModel: WeatherViewModel by viewModels() // Use viewModels() for correct factory
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        database = WeatherDatabase.getInstance(this) // Initialize database for storage
+
         setContent {
-            WeatherApp()
+            WeatherApp(viewModel)
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun WeatherApp() {
+fun WeatherApp(viewModel: WeatherViewModel) {
     WeatherTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -63,7 +80,7 @@ fun WeatherApp() {
                 )
                 Column(modifier = Modifier.fillMaxSize()) {
                     Header()
-                    WeatherScreen()
+                    WeatherScreen(viewModel)
                 }
                 // Positioning the footer at the bottom-left corner
                 Box(
@@ -108,15 +125,30 @@ fun Header() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherScreen() {
-    var date by remember { mutableStateOf("") }
-    var year by remember { mutableStateOf("") }
+fun WeatherScreen(viewModel: WeatherViewModel) {
+    var latitude by remember { mutableStateOf("") }
+    var longitude by remember { mutableStateOf("") }
     var dayOfWeek by remember { mutableStateOf("") }
 
     val state = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
     val openDialog = remember { mutableStateOf(false) }
+    val showResopnse = remember { mutableStateOf(false) }
+    val isFuture = remember { mutableStateOf("false") }
+
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val Date = LocalDate.ofEpochDay(state.selectedDateMillis?.div((1000 * 60 * 60 * 24)) ?: 1).format(formatter)
+
+    val data = viewModel.weatherData
+    val maxTemp = viewModel.maxTemperature.value
+    val minTemp = viewModel.minTemperature.value
+    val lat = viewModel.latitudeS.value
+    val long = viewModel.longitudeS.value
+    isFuture.value = viewModel.isFuture.value;
+
+    println(Date + " DATE YE HAI"+ " "+ data.value)
 
 
     Column(
@@ -136,6 +168,7 @@ fun WeatherScreen() {
         }
 
         if (openDialog.value) {
+            showResopnse.value = false;
             DatePickerDialog(
                 onDismissRequest = {
                     openDialog.value = false
@@ -166,52 +199,41 @@ fun WeatherScreen() {
         }
         Text("Weather App", color = Color.White, fontSize = 24.sp)
         OutlinedTextField(
-            value = date,
-            onValueChange = { date = it },
-            label = { Text("Date (Format: DD-MM)", color = Color.White, fontSize = 16.sp) }
+            value = latitude,
+            onValueChange = { latitude = it },
+            label = { Text("Latitude", color = Color.White, fontSize = 16.sp) }
         )
         OutlinedTextField(
-            value = year,
-            onValueChange = { year = it },
-            label = { Text("Year", color = Color.White, fontSize = 16.sp) }
+            value = longitude,
+            onValueChange = { longitude = it },
+            label = { Text("Longitude", color = Color.White, fontSize = 16.sp) }
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
             // Handling the date and year input here
-            if (date.isNotEmpty() && year.isNotEmpty()) {
-                val inputDateString = "$date-$year"
-                val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                val currentDate = Calendar.getInstance().time
-                val selectedDate = dateFormat.parse(inputDateString)
-
-                // Check if selected date is not in the future
-                if (selectedDate.before(currentDate)) {
-                    val selectedCalendar = Calendar.getInstance()
-                    selectedCalendar.time = selectedDate
-
-                    // Get the day of the week for the selected date
-                    val dayOfWeekValue = selectedCalendar.get(Calendar.DAY_OF_WEEK)
-                    dayOfWeek = when (dayOfWeekValue) {
-                        Calendar.SUNDAY -> "Sunday"
-                        Calendar.MONDAY -> "Monday"
-                        Calendar.TUESDAY -> "Tuesday"
-                        Calendar.WEDNESDAY -> "Wednesday"
-                        Calendar.THURSDAY -> "Thursday"
-                        Calendar.FRIDAY -> "Friday"
-                        Calendar.SATURDAY -> "Saturday"
-                        else -> ""
-                    }
-                } else {
-                    // TODO: Handle future dates
-                    dayOfWeek = "Date is in the future"
-                }
+            if (true) {
+                isFuture.value = "false"
+                showResopnse.value = true
+                viewModel.fetchWeather(Date, 28.5485254, 77.2749852)
             }
         }) {
             Text("Proceed")
         }
         Spacer(modifier = Modifier.height(16.dp))
+
+        if(showResopnse.value){
+            if(isFuture.value == "true"){
+                Box(modifier = Modifier.background(Color.White)){
+                    Text(text = "Note: This is mean data from previous years", color = Color.Black, fontSize = 16.sp)
+                }
+            }
+            Text(text = "Date is: $Date", color = Color.White, fontSize = 16.sp)
+            Text(text = "Minimum Temp: $maxTemp", color = Color.White, fontSize = 16.sp)
+            Text(text = "Maximum Temp: $minTemp", color = Color.White, fontSize = 16.sp)
+            Text(text = "Latitude: $lat", color = Color.White, fontSize = 16.sp)
+            Text(text = "Longitude: $long", color = Color.White, fontSize = 16.sp)
+        }
         // Display the day of the week
-        Text(text = "Day of the week: $dayOfWeek", color = Color.White, fontSize = 16.sp)
     }
 }
 
@@ -258,9 +280,4 @@ fun Footer() {
             modifier = Modifier.size(36.dp)
         )
     }
-}
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    WeatherApp()
 }
