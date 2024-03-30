@@ -1,5 +1,6 @@
 package com.example.weather
 
+import android.app.AlertDialog
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -135,17 +137,25 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
 
     val state = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
     val openDialog = remember { mutableStateOf(false) }
-    val showResopnse = remember { mutableStateOf(false) }
+    val showResponse = remember { mutableStateOf(false) }
+    val showDB = remember { mutableStateOf(false) }
     val isFuture = remember { mutableStateOf("false") }
+    val apiClicked = remember { mutableStateOf(false) }
+    val dbClicked = remember { mutableStateOf(false) }
 
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val Date = LocalDate.ofEpochDay(state.selectedDateMillis?.div((1000 * 60 * 60 * 24)) ?: 1).format(formatter)
 
     val data = viewModel.weatherData
     val maxTemp = viewModel.maxTemperature.value
+    val openDialogAPI = remember { mutableStateOf(false) }
+    val openDialogDB = remember { mutableStateOf(false) }
     val minTemp = viewModel.minTemperature.value
     val lat = viewModel.latitudeS.value
     val long = viewModel.longitudeS.value
+
+    val noDatafromAPI = viewModel.noDataFromAPI.value
+    val noDatafromDB = viewModel.noDataFromDB.value
     isFuture.value = viewModel.isFuture.value;
 
     println(Date + " DATE YE HAI"+ " "+ data.value)
@@ -166,9 +176,14 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
         ) {
             Text("Select Date", color = Color.White)
         }
+        if(state.selectedDateMillis!=null){
+            Text(text = "Selected date is " + Date, color =  Color.White)
+        }
 
         if (openDialog.value) {
-            showResopnse.value = false;
+            showResponse.value = false;
+            apiClicked.value = false
+            dbClicked.value = false
             DatePickerDialog(
                 onDismissRequest = {
                     openDialog.value = false
@@ -212,30 +227,104 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
         Button(onClick = {
             // Handling the date and year input here
             if (true) {
+
                 isFuture.value = "false"
-                showResopnse.value = true
+                showResponse.value = true
                 viewModel.fetchWeather(Date, 28.5485254, 77.2749852)
+                dbClicked.value = false
+                apiClicked.value = true
+                if(noDatafromAPI=="true"){
+                    openDialogAPI.value = true
+                }
+
             }
         }) {
-            Text("Proceed")
+            Text("Fetch using API")
+        }
+        Button(onClick = {
+            // Handling the date and year input here
+            if (true) {
+
+                isFuture.value = "false"
+                showResponse.value = true
+                viewModel.fetchWeatherData(Date, 28.5485254, 77.2749852)
+                apiClicked.value = false
+                dbClicked.value = true
+                if(noDatafromDB=="true"){
+                    openDialogDB.value = true
+                }
+            }
+        }) {
+            Text("Fetch from Database")
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        if(showResopnse.value){
+        if(showResponse.value){
             if(isFuture.value == "true"){
                 Box(modifier = Modifier.background(Color.White)){
                     Text(text = "Note: This is mean data from previous years", color = Color.Black, fontSize = 16.sp)
                 }
             }
-            Text(text = "Date is: $Date", color = Color.White, fontSize = 16.sp)
-            Text(text = "Minimum Temp: $maxTemp", color = Color.White, fontSize = 16.sp)
-            Text(text = "Maximum Temp: $minTemp", color = Color.White, fontSize = 16.sp)
-            Text(text = "Latitude: $lat", color = Color.White, fontSize = 16.sp)
-            Text(text = "Longitude: $long", color = Color.White, fontSize = 16.sp)
+
+                if (noDatafromAPI=="true" && apiClicked.value) {
+                    if (openDialogAPI.value) {
+                        AlertDialog(
+                            onDismissRequest = { openDialogAPI.value = false },
+                            title = { Text("Error") },
+                            text = { Text("Please check your internet connection") },
+                            confirmButton = {
+                                Button(onClick = { openDialogAPI.value = false }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
+                    }
+                }
+
+                else if(noDatafromDB=="true" && dbClicked.value){
+                    if (openDialogDB.value) {
+                        AlertDialog(
+                            onDismissRequest = { openDialogDB.value = false },
+                            title = { Text("Error") },
+                            text = { Text("No entry for selected date and location in Database, please try fetching using API and then use Database") },
+                            confirmButton = {
+                                Button(onClick = { openDialogDB.value = false }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
+                    }
+                }
+
+                else{
+                    if(dbClicked.value){
+                        Box(modifier = Modifier
+                            .background(Color.White)
+                            .padding(6.dp)){
+                            Text(text = "Fetched from database", color = Color.Black, fontSize = 16.sp)
+                        }
+                    }
+                    if(apiClicked.value){
+                        Box(modifier = Modifier
+                            .background(Color.White)
+                            .padding(6.dp)){
+                            Text(text = "Fetched using API", color = Color.Black, fontSize = 16.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(text = "Date is: $Date", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Minimum Temp: $maxTemp", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Maximum Temp: $minTemp", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Latitude: $lat", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Longitude: $long", color = Color.White, fontSize = 16.sp)
+                }
+            }
+
         }
-        // Display the day of the week
-    }
+        // Display the day of the week }
 }
+
+
 
 @Composable
 fun Footer() {

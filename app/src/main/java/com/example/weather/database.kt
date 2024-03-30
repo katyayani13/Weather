@@ -116,6 +116,8 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     val maxTemperature: MutableState<String> = mutableStateOf(String())
     val latitudeS: MutableState<String> = mutableStateOf(String())
     val longitudeS: MutableState<String> = mutableStateOf(String())
+    val noDataFromAPI: MutableState<String> = mutableStateOf(String())
+    val noDataFromDB: MutableState<String> = mutableStateOf(String())
 
     fun calculateAverageMinMax(data: List<Pair<Double, Double>>): Pair<Double, Double> {
         val minSum = data.sumOf { it.second }
@@ -153,10 +155,9 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     @RequiresApi(Build.VERSION_CODES.O)
     fun fetchHistoricalWeather(date: String, latitude: Double, longitude: Double) {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        val currentDate = LocalDate.now() // Implement this function to get the current date
+        val currentDate = LocalDate.now().minusDays(6) // Implement this function to get the current date
         val startDate = currentDate.minusYears(10) // Format start date for 10 years ago
-        latitudeS.value = latitude.toString()
-        longitudeS.value = longitude.toString()
+
         if(LocalDate.now().minusDays(5).isBefore(LocalDate.parse(date, formatter))){
             println("Date is future "+  currentDate + " " + startDate)
         }
@@ -180,19 +181,40 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
                 println("filtered history average "  + average)
                 minTemperature.value = average.first.toString()
                 maxTemperature.value = average.second.toString()
-
+                noDataFromAPI.value = "false"
             } else {
                 Log.e("Average", "Could not get past 10 years data")
             }
             } catch (e: Exception) {
+                noDataFromAPI.value = "true"
                 // Handle exceptions, potentially retry or inform the user
                 Log.e("WeatherViewModel", "Error fetching historical weather: $e")
             }
         }
     }
 
+    fun fetchWeatherData(date: String, latitude: Double, longitude: Double) {
+        viewModelScope.launch {
+            val record = WeatherDatabase.getInstance(getApplication()).weatherDao().getWeatherDataByDateAndLocation(date, latitude, longitude)
+            if (record.isNotEmpty()){
+                minTemperature.value = record[0].minTemperature.toString()
+                maxTemperature.value = record[0].maxTemperature.toString()
+                latitudeS.value = record[0].latitude.toString()
+                longitudeS.value = record[0].longitude.toString()
+                noDataFromDB.value = "false"
+                println("from DB " + record)
+            }
+            else{
+                noDataFromDB.value = "true"
+                println("from DB no record found for this location and date")
+            }
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun fetchWeather(date: String, latitude: Double, longitude: Double) {
+        latitudeS.value = latitude.toString()
+        longitudeS.value = longitude.toString()
         println(" LOCATION " + latitude + " "+ longitude + " " + date)
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         if(LocalDate.now().minusDays(5).isBefore(LocalDate.parse(date, formatter))){
@@ -221,7 +243,8 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     //                    _weatherData.postValue(weatherData.toWeatherRecord())  // Update LiveData
                         minTemperature.value = response.daily.temperature_2m_min.toString()
                         maxTemperature.value = response.daily.temperature_2m_max.toString()
-                        getAllRecords()
+                        noDataFromAPI.value = "false"
+//                        getAllRecords()
                         if (existingRecord.isEmpty()) {
                             // No existing entry, insert new data
                             Log.d("WeatherViewModel", "Weather data inserted for $date ($latitude, $longitude)")
@@ -235,6 +258,7 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
                     }
 
                 } catch (e: Exception) {
+                    noDataFromAPI.value = "true"
                     // Handle exceptions, potentially retry or inform the user
                     Log.e("WeatherViewModel", "Error fetching weather: $e")
                 }
