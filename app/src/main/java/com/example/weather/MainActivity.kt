@@ -11,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -27,6 +28,7 @@ import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -133,7 +138,6 @@ fun Header() {
 fun WeatherScreen(viewModel: WeatherViewModel) {
     var latitude by remember { mutableStateOf("") }
     var longitude by remember { mutableStateOf("") }
-    var dayOfWeek by remember { mutableStateOf("") }
 
     val state = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
     val openDialog = remember { mutableStateOf(false) }
@@ -176,9 +180,14 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
         ) {
             Text("Select Date", color = Color.White)
         }
+        Spacer(modifier = Modifier.height(6.dp))
         if(state.selectedDateMillis!=null){
             Text(text = "Selected date is " + Date, color =  Color.White)
         }
+        else{
+            Text(text = "please select a date (after 1970-01-02)", color =  Color.White)
+        }
+        Spacer(modifier = Modifier.height(6.dp))
 
         if (openDialog.value) {
             showResponse.value = false;
@@ -216,46 +225,56 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
         OutlinedTextField(
             value = latitude,
             onValueChange = { latitude = it },
-            label = { Text("Latitude", color = Color.White, fontSize = 16.sp) }
+            textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold),
+            label = { Text("Latitude", color = Color.White, fontSize = 16.sp) } ,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+
         )
         OutlinedTextField(
             value = longitude,
-            onValueChange = { longitude = it },
-            label = { Text("Longitude", color = Color.White, fontSize = 16.sp) }
+            onValueChange = { longitude = it
+            },
+            textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold),
+
+            label = { Text("Longitude", color = Color.White, fontSize = 16.sp) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            // Handling the date and year input here
-            if (true) {
 
-                isFuture.value = "false"
-                showResponse.value = true
-                viewModel.fetchWeather(Date, 28.5485254, 77.2749852)
-                dbClicked.value = false
-                apiClicked.value = true
-                if(noDatafromAPI=="true"){
-                    openDialogAPI.value = true
+        if(latitude!="" && longitude!="" && state.selectedDateMillis!=null){
+
+            Button(onClick = {
+                // Handling the date and year input here
+                if (true) {
+
+                    isFuture.value = "false"
+                    showResponse.value = true
+                    viewModel.fetchWeather(Date, latitude.toDouble() , longitude.toDouble())
+                    dbClicked.value = false
+                    apiClicked.value = true
+                    if(noDatafromAPI=="true"){
+                        openDialogAPI.value = true
+                    }
+
                 }
-
+            }) {
+                Text("Fetch using API")
             }
-        }) {
-            Text("Fetch using API")
-        }
-        Button(onClick = {
-            // Handling the date and year input here
-            if (true) {
 
-                isFuture.value = "false"
-                showResponse.value = true
-                viewModel.fetchWeatherData(Date, 28.5485254, 77.2749852)
-                apiClicked.value = false
-                dbClicked.value = true
-                if(noDatafromDB=="true"){
-                    openDialogDB.value = true
+            Button(onClick = {
+                if (true) {
+                    isFuture.value = "false"
+                    showResponse.value = true
+                    viewModel.fetchWeatherData(Date, latitude.toDouble() , longitude.toDouble())
+                    apiClicked.value = false
+                    dbClicked.value = true
+                    if(noDatafromDB=="true"){
+                        openDialogDB.value = true
+                    }
                 }
+            }) {
+                Text("Fetch from Database")
             }
-        }) {
-            Text("Fetch from Database")
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -321,7 +340,6 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
             }
 
         }
-        // Display the day of the week }
 }
 
 
