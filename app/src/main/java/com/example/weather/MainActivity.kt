@@ -154,6 +154,7 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
     val maxTemp = viewModel.maxTemperature.value
     val openDialogAPI = remember { mutableStateOf(false) }
     val openDialogDB = remember { mutableStateOf(false) }
+    val openDialogLatLong = remember { mutableStateOf(false) }
     val minTemp = viewModel.minTemperature.value
     val lat = viewModel.latitudeS.value
     val long = viewModel.longitudeS.value
@@ -243,38 +244,41 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
 
         if(latitude!="" && longitude!="" && state.selectedDateMillis!=null){
 
-            Button(onClick = {
-                // Handling the date and year input here
-                if (true) {
 
-                    isFuture.value = "false"
-                    showResponse.value = true
-                    viewModel.fetchWeather(Date, latitude.toDouble() , longitude.toDouble())
-                    dbClicked.value = false
-                    apiClicked.value = true
-                    if(noDatafromAPI=="true"){
-                        openDialogAPI.value = true
+
+                Button(onClick = {
+                    // Handling the date and year input here
+                    if (true) {
+
+                        isFuture.value = "false"
+                        showResponse.value = true
+                        viewModel.fetchWeather(Date, latitude.toDouble() , longitude.toDouble())
+                        dbClicked.value = false
+                        apiClicked.value = true
+                        if(noDatafromAPI=="true"){
+                            openDialogAPI.value = true
+                        }
+
                     }
-
+                }) {
+                    Text("Fetch using API")
                 }
-            }) {
-                Text("Fetch using API")
-            }
 
-            Button(onClick = {
-                if (true) {
-                    isFuture.value = "false"
-                    showResponse.value = true
-                    viewModel.fetchWeatherData(Date, latitude.toDouble() , longitude.toDouble())
-                    apiClicked.value = false
-                    dbClicked.value = true
-                    if(noDatafromDB=="true"){
-                        openDialogDB.value = true
+                Button(onClick = {
+                    if (true) {
+                        isFuture.value = "false"
+                        showResponse.value = true
+                        viewModel.fetchWeatherData(Date, latitude.toDouble() , longitude.toDouble())
+                        apiClicked.value = false
+                        dbClicked.value = true
+                        if(noDatafromDB=="true"){
+                            openDialogDB.value = true
+                        }
                     }
+                }) {
+                    Text("Fetch from Database")
                 }
-            }) {
-                Text("Fetch from Database")
-            }
+
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -285,12 +289,17 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
                 }
             }
 
+
+
+
+
+
                 if (noDatafromAPI=="true" && apiClicked.value) {
                     if (openDialogAPI.value) {
                         AlertDialog(
                             onDismissRequest = { openDialogAPI.value = false },
                             title = { Text("Error") },
-                            text = { Text("Please check your internet connection") },
+                            text = { Text("Please check your internet connection or input correct latitude longitude, make sure to keep them in correct range") },
                             confirmButton = {
                                 Button(onClick = { openDialogAPI.value = false }) {
                                     Text("OK")
@@ -332,8 +341,8 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(text = "Date is: $Date", color = Color.White, fontSize = 16.sp)
-                    Text(text = "Minimum Temp: $maxTemp", color = Color.White, fontSize = 16.sp)
-                    Text(text = "Maximum Temp: $minTemp", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Minimum Temp: $minTemp", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Maximum Temp: $maxTemp", color = Color.White, fontSize = 16.sp)
                     Text(text = "Latitude: $lat", color = Color.White, fontSize = 16.sp)
                     Text(text = "Longitude: $long", color = Color.White, fontSize = 16.sp)
                 }
